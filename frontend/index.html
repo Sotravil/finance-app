@@ -89,6 +89,20 @@
         href="/static/icons/icon-512.png"
     >
 
+    <!-- Agregar después de [4.2] -->
+
+    <!-- [4.2.1] Favicons adicionales para mejor compatibilidad -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon-16.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+
+    <!-- [4.7] Microsoft Tiles (Windows) -->
+    <meta name="msapplication-TileColor" content="#111111">
+    <meta name="msapplication-TileImage" content="/static/icons/icon-144.png">
+
+    <!-- Agregar en sección [8] - Descomentar si usas API externa -->
+    <link rel="dns-prefetch" href="https://api.finance.ejemplo.com">
+
     <!-- [4.3] Icono para iOS/iPadOS al añadir a pantalla de inicio -->
     <link
         rel="apple-touch-icon"
@@ -218,1128 +232,654 @@
     <script type="module" src="js/main.js"></script>
 
 </head>
-<body data-theme="dark" data-connection="online" data-sync-state="idle">
+<body data-theme="dark" data-connection="online" data-sync-state="idle" data-view="loading">
+
     <!-- ========================================================= -->
-    <!--  APP SHELL PRINCIPAL (NÚCLEO FIJO DE LA PWA)             -->
-    <!--  Hasta aquí ya definimos:                                -->
-    <!--    ✔ header (zona superior)                              -->
-    <!--    ✔ sidebar (menú POS lateral)                          -->
-    <!--    ✔ main (contenedor central vacío aún)                 -->
+    <!-- CAPA 1: APP SHELL (ESTRUCTURA FIJA)                       -->
+    <!--         - Header, Sidebar, Main View                      -->
+    <!--         - Esta estructura NUNCA cambia                    -->
     <!-- ========================================================= -->
-
-    <!-- (1) HEADER YA CREADO -->
-    <header id="app-header">
-        <div id="header-content">
-            <div id="header-left">
-                <span id="app-logo-text">Finance PWA</span>
+    
+    <!-- [1.1] HEADER PRINCIPAL
+         - Barra superior fija (position: sticky)
+         - Logo, búsqueda global, notificaciones, perfil
+         - Controlado por: ui_layout.js
+         - Responsive: se colapsa en mobile con hamburger menu -->
+    <header id="app-header" class="app-header" role="banner">
+        <div class="header-container">
+            <!-- [1.1.1] Logo y toggle del sidebar -->
+            <div class="header-brand">
+                <button 
+                    type="button" 
+                    id="sidebar-toggle" 
+                    class="btn-icon" 
+                    aria-label="Abrir menú"
+                    aria-expanded="false"
+                    aria-controls="app-sidebar"
+                    data-event="toggle-sidebar"
+                >
+                    <svg width="24" height="24">
+                        <use href="#icon-menu"></use>
+                    </svg>
+                </button>
+                
+                <h1 class="brand-logo">
+                    <img src="/static/icons/icon-192.png" alt="Finance PWA" width="32" height="32">
+                    <span class="brand-text">Finance PWA</span>
+                </h1>
             </div>
-
-            <div id="header-center">
-                <span id="business-name-display">Negocio no configurado</span>
+            
+            <!-- [1.1.2] Búsqueda global (expandible en mobile) -->
+            <div class="header-search">
+                <button 
+                    type="button" 
+                    id="search-toggle" 
+                    class="btn-icon btn-search-mobile"
+                    aria-label="Buscar"
+                    data-event="toggle-search"
+                >
+                    <svg width="20" height="20">
+                        <use href="#icon-search"></use>
+                    </svg>
+                </button>
+                
+                <div id="search-bar" class="search-bar" role="search">
+                    <svg class="search-icon" width="20" height="20">
+                        <use href="#icon-search"></use>
+                    </svg>
+                    <input 
+                        type="search" 
+                        id="global-search" 
+                        class="search-input" 
+                        placeholder="Buscar ventas, productos, bloques..."
+                        aria-label="Buscar en Finance PWA"
+                        autocomplete="off"
+                    >
+                    <button 
+                        type="button" 
+                        id="search-clear" 
+                        class="btn-icon-small"
+                        aria-label="Limpiar búsqueda"
+                        hidden
+                    >
+                        <svg width="16" height="16">
+                            <use href="#icon-x"></use>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Resultados de búsqueda (dropdown) -->
+                <div id="search-results" class="search-results" role="listbox" hidden></div>
             </div>
-
-            <div id="header-right">
-                <span id="connection-status-label">Estado: desconocido</span>
-                <button id="header-settings-button" type="button">⚙</button>
+            
+            <!-- [1.1.3] Acciones del header (notificaciones, perfil) -->
+            <div class="header-actions">
+                <!-- Sincronización manual -->
+                <button 
+                    type="button" 
+                    id="sync-trigger" 
+                    class="btn-icon"
+                    aria-label="Sincronizar datos"
+                    data-event="manual-sync"
+                    data-sync-state="idle"
+                >
+                    <svg width="20" height="20">
+                        <use href="#icon-refresh"></use>
+                    </svg>
+                </button>
+                
+                <!-- Notificaciones -->
+                <button 
+                    type="button" 
+                    id="notifications-btn" 
+                    class="btn-icon"
+                    aria-label="Notificaciones"
+                    aria-haspopup="true"
+                    data-count="0"
+                >
+                    <svg width="20" height="20">
+                        <use href="#icon-bell"></use>
+                    </svg>
+                    <span id="notifications-badge" class="badge" hidden>0</span>
+                </button>
+                
+                <!-- Menú de usuario -->
+                <button 
+                    type="button" 
+                    id="user-menu-btn" 
+                    class="btn-icon user-avatar"
+                    aria-label="Menú de usuario"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                >
+                    <svg width="24" height="24">
+                        <use href="#icon-user"></use>
+                    </svg>
+                </button>
             </div>
         </div>
     </header>
-
-    <!-- (2) SIDEBAR YA CREADO -->
-    <aside id="sidebar">
-        <nav id="sidebar-nav">
-            <span id="sidebar-placeholder">Menú principal</span>
+    
+    <!-- [1.2] SIDEBAR / NAVEGACIÓN PRINCIPAL
+         - Menú lateral con navegación a todas las vistas
+         - Colapsable en mobile/tablet
+         - Controlado por: ui_layout.js, router.js
+         - Atributos: data-collapsed (true/false) -->
+    <aside 
+        id="app-sidebar" 
+        class="app-sidebar" 
+        role="navigation" 
+        aria-label="Navegación principal"
+        data-collapsed="false"
+    >
+        <nav class="sidebar-nav">
+            <ul class="nav-list" role="list">
+                <!-- [1.2.1] Dashboard -->
+                <li class="nav-item">
+                    <a 
+                        href="#/dashboard" 
+                        class="nav-link active" 
+                        data-route="dashboard"
+                        aria-current="page"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-home"></use>
+                        </svg>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.2] Ventas / POS -->
+                <li class="nav-item">
+                    <a 
+                        href="#/sales" 
+                        class="nav-link" 
+                        data-route="sales"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-dollar"></use>
+                        </svg>
+                        <span class="nav-text">Ventas</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.3] Productos -->
+                <li class="nav-item">
+                    <a 
+                        href="#/products" 
+                        class="nav-link" 
+                        data-route="products"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-package"></use>
+                        </svg>
+                        <span class="nav-text">Productos</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.4] Bloques -->
+                <li class="nav-item">
+                    <a 
+                        href="#/blocks" 
+                        class="nav-link" 
+                        data-route="blocks"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-layers"></use>
+                        </svg>
+                        <span class="nav-text">Bloques</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.5] Metas -->
+                <li class="nav-item">
+                    <a 
+                        href="#/goals" 
+                        class="nav-link" 
+                        data-route="goals"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-target"></use>
+                        </svg>
+                        <span class="nav-text">Metas</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.6] Analytics -->
+                <li class="nav-item">
+                    <a 
+                        href="#/analytics" 
+                        class="nav-link" 
+                        data-route="analytics"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-bar-chart"></use>
+                        </svg>
+                        <span class="nav-text">Analytics</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.7] Recibos -->
+                <li class="nav-item">
+                    <a 
+                        href="#/receipts" 
+                        class="nav-link" 
+                        data-route="receipts"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-file-text"></use>
+                        </svg>
+                        <span class="nav-text">Recibos</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.8] Actividad -->
+                <li class="nav-item">
+                    <a 
+                        href="#/activity" 
+                        class="nav-link" 
+                        data-route="activity"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-activity"></use>
+                        </svg>
+                        <span class="nav-text">Actividad</span>
+                    </a>
+                </li>
+                
+                <!-- [1.2.9] Configuración -->
+                <li class="nav-item nav-item-bottom">
+                    <a 
+                        href="#/settings" 
+                        class="nav-link" 
+                        data-route="settings"
+                    >
+                        <svg class="nav-icon" width="20" height="20">
+                            <use href="#icon-settings"></use>
+                        </svg>
+                        <span class="nav-text">Configuración</span>
+                    </a>
+                </li>
+            </ul>
         </nav>
+        
+        <!-- [1.2.10] Footer del sidebar con info de sincronización -->
+        <div class="sidebar-footer">
+            <div class="sync-status" data-sync-state="idle">
+                <svg class="sync-icon" width="16" height="16">
+                    <use href="#icon-check-circle"></use>
+                </svg>
+                <span class="sync-text">Sincronizado</span>
+            </div>
+        </div>
     </aside>
-
-    <!-- (3) MAIN YA CREADO (sin vistas aún) -->
-    <main id="main-view">
-        <div id="main-placeholder">
-            <p>Área principal de la app (main-view). Aquí se mostrarán los módulos.</p>
-        </div>
+    
+    <!-- [1.3] MAIN VIEW CONTAINER
+         - Contenedor principal donde router.js renderiza las vistas
+         - Cada vista es una <section> con data-view="nombre"
+         - Solo una vista visible a la vez (class="active") -->
+    <main 
+        id="app-main" 
+        class="app-main" 
+        role="main"
+    >
+        <!-- Las vistas se renderizan aquí dinámicamente -->
+        <!-- Estructura inyectada por router.js y módulos ui_*.js -->
     </main>
 
 
     <!-- ========================================================= -->
-    <!-- 4. LAYER DE SENSORES Y UTILIDADES GLOBALES (base técnica) -->
+    <!-- CAPA 2: VIEWS (PANTALLAS/MÓDULOS INTERNOS)                -->
+    <!--         - Se cargan bajo demanda en #app-main            -->
+    <!--         - Controladas por router.js                       -->
     <!-- ========================================================= -->
-    <!--
-        Esta sección es totalmente opcional para apps normales,
-        pero tu PWA avanzada la NECESITA para:
-
-        - Detectar cambios de conexión (online/offline)
-        - Detectar si la pantalla cambia tamaño (rotación, POS tablet)
-        - Detectar si el usuario cambia de pestaña o minimiza la app
-        - Capturar interacciones técnicas (telemetría, analíticas)
-        - Detectar si la PWA está instalada o abierta en modo standalone
-        - Registrar eventos globales que sirven para Behavior Tracking
-          (ventas lentas, tiempos muertos, rutina del negocio)
+    
+    <!-- NOTA: Las vistas NO se pre-renderizan aquí.
+         Se crean dinámicamente por los módulos ui_*.js cuando el usuario
+         navega a cada ruta. Aquí solo documentamos la estructura esperada.
+         
+         Vistas que router.js puede cargar:
+         - #onboarding-view   (ui_onboarding.js)
+         - #dashboard-view    (ui_layout.js)
+         - #sales-view        (ui_sales.js)
+         - #products-view     (ui_products.js)
+         - #blocks-view       (ui_blocks.js)
+         - #goals-view        (ui_goals.js)
+         - #analytics-view    (ui_analytics.js)
+         - #receipts-view     (ui_receipts.js)
+         - #activity-view     (ui_activity.js)
+         - #settings-view     (ui_layout.js)
+         
+         Cada vista tiene esta estructura base:
+         <section id="[nombre]-view" class="view" data-view="[nombre]">
+             <div class="view-header">
+                 <h2 class="view-title">Título</h2>
+                 <div class="view-actions">Botones</div>
+             </div>
+             <div class="view-content">
+                 Contenido específico de la vista
+             </div>
+         </section>
     -->
 
-    <!-- 4.1 SENSOR DE ESTADO DE INTERNET -->
-    <div id="network-sensor" hidden>
-        <!--
-            Este elemento NO se muestra al usuario.
-            Es un “nodo técnico” para que JS pueda:
-            - escuchar eventos globales de conexión,
-            - registrar cuándo el dispositivo pierde o recupera internet,
-            - y comunicarlo al syncEngine.js.
-
-            JS puede actualizar attributes como:
-            data-online="true"
-            data-online="false"
-        -->
-    </div>
-
-    <!-- 4.2 SENSOR DE VISIBILIDAD (APP ACTIVA / INACTIVA) -->
-    <div id="visibility-sensor" hidden>
-        <!--
-            Este sensor permitirá saber:
-            - si el usuario cambió de pestaña,
-            - si salió de la app,
-            - cuánto tiempo estuvo inactivo,
-            - si es necesario disparar un auto-save local,
-            - si se debe pausar sincronización.
-
-            Usa Page Visibility API (document.hidden en JS)
-        -->
-    </div>
-
-    <!-- 4.3 SENSOR DE TAMAÑO DE PANTALLA -->
-    <div id="viewport-sensor" hidden>
-        <!--
-            Detectar:
-            - Rotación (portrait/landscape)
-            - Tamaño real del POS
-            - Densidad de píxeles para gráficos y layouts
-            - Cambios de resolución dinámica
-
-            JS podrá leer width/height y actualizar CSS variables.
-        -->
-    </div>
-
-
-    <!-- 4.4 SENSOR DE DISPOSITIVO (IDENTIFICACIÓN) -->
-    <div id="device-sensor" hidden>
-        <!--
-            Aquí JS puede depositar:
-            - fingerprint del dispositivo,
-            - tipo de dispositivo (phone/tablet/desktop),
-            - info básica del navegador,
-            - si es app instalada o web normal,
-            - si está corriendo en iPhone/Android.
-
-            Esto se usa después para:
-            - UX adaptativa,
-            - optimización,
-            - decisiones de layout,
-            - sesiones específicas por dispositivo.
-        -->
-    </div>
-
 
     <!-- ========================================================= -->
-    <!-- 5. ÁREA PARA EXTENSIONES FUTURAS (AÚN VACÍAS)             -->
+    <!-- CAPA 3: MODALES (DIÁLOGOS Y FORMULARIOS EMERGENTES)       -->
+    <!--         - Contenedor global para todos los modales       -->
     <!-- ========================================================= -->
-    <!--
-        NO colocamos nada aquí todavía porque tú lo pediste.
-
-        Pero este espacio será donde vamos a montar:
-        - contenedor de modales
-        - contenedor de notificaciones tipo toast
-        - overlays (loading, offline)
-        - banners informativos
-        - paneles flotantes
-        - UI avanzada opcional
-
-        Por eso NO CERRAMOS EL BODY.
-    -->
-
-        <!-- ========================================================= -->
-    <!-- 3. MAIN VIEW (TODAS LAS VISTAS / MÓDULOS INTERNOS)        -->
-    <!-- ========================================================= -->
-    <main id="main-view">
-        <!--
-            [ROL DEL MAIN]
-            --------------------------------------------------------
-            - Contenedor principal de TODAS las vistas de la app.
-            - Cada módulo tiene su propio <section> con:
-                * un id único (ej: onboarding-view)
-                * la clase común "app-view" para facilitar estilos
-                * atributo data-view para ayudar al router.js
-            - router.js:
-                * mostrará SOLO UNA vista a la vez, añadiendo/removiendo
-                  clases como "is-active" o "is-hidden".
-            - ui_*.js:
-                * cada archivo se encarga de su propia sección.
-        -->
-
-
-        <!-- ===================================================== -->
-        <!-- 3.1 ONBOARDING VIEW                                   -->
-        <!--     - Explica cómo funciona la app                    -->
-        <!--     - Pide datos básicos del negocio                  -->
-        <!-- ===================================================== -->
-        <section
-            id="onboarding-view"
-            class="app-view"
-            data-view="onboarding"
-        >
-            <!--
-                [PROPÓSITO]
-                - Guiar al usuario la primera vez que entra.
-                - Explicar filosofía de la app (setup pesado → uso fácil).
-                - Recoger:
-                    * nombre del negocio
-                    * ciudad
-                    * moneda
-                    * horario general (más adelante)
-            -->
-
-            <!-- Encabezado de la vista -->
-            <header class="view-header">
-                <h1 class="view-title">Bienvenido a Finance PWA</h1>
-                <p class="view-subtitle">
-                    Configura lo básico de tu negocio para que los cálculos sean precisos.
-                </p>
-            </header>
-
-            <!-- Contenido principal de onboarding -->
-            <div class="view-content" id="onboarding-content">
-                <!--
-                    ui_onboarding.js será responsable de:
-                    - Renderizar un formulario paso a paso (wizard).
-                    - Guardar datos en:
-                        * settingsStore.js (frontend)
-                        * /api/onboarding (backend) cuando haya conexión.
-                    - Marcar en state.js que el onboarding fue completado.
-
-                    Aquí puedes imaginar:
-                    - Paso 1: Datos del negocio.
-                    - Paso 2: Horarios y jornadas.
-                    - Paso 3: Metas iniciales (opcional).
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.2 BLOCKS VIEW                                       -->
-        <!--     - Ingredientes, insumos, servicios, mano de obra  -->
-        <!-- ===================================================== -->
-        <section
-            id="blocks-view"
-            class="app-view"
-            data-view="blocks"
-        >
-            <!-- Encabezado de la vista -->
-            <header class="view-header">
-                <h1 class="view-title">Blocks del negocio</h1>
-                <p class="view-subtitle">
-                    Registra ingredientes, insumos, servicios y mano de obra con su costo real.
-                </p>
-            </header>
-
-            <!-- Barra de herramientas (filtros, búsqueda, acciones) -->
-            <div class="view-toolbar" id="blocks-toolbar">
-                <!--
-                    ui_blocks.js podrá insertar aquí:
-                    - Barra de búsqueda.
-                    - Filtros por tipo (ingrediente/insumo/servicio/labor).
-                    - Botón "Nuevo block".
-                -->
-            </div>
-
-            <!-- Contenido principal de Blocks -->
-            <div class="view-content" id="blocks-content">
-                <!--
-                    ui_blocks.js:
-                    - Mostrará una tabla o tarjetas con los blocks registrados.
-                    - Permitirá editar:
-                        * nombre
-                        * precio de paquete
-                        * cantidad total
-                        * unidad (g, kg, ml, unidad, hora, etc.)
-                        * tipo
-                        * si es exacto o aproximado
-
-                    storage:
-                    - sqlLocal.js y localDb.js guardarán estos datos localmente.
-                    - blocksApi.js sincronizará con el backend cuando haya internet.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.3 PRODUCTS VIEW                                     -->
-        <!--     - Recetas inteligentes basadas en blocks          -->
-        <!-- ===================================================== -->
-        <section
-            id="products-view"
-            class="app-view"
-            data-view="products"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Productos / Recetas</h1>
-                <p class="view-subtitle">
-                    Crea tus productos usando blocks y calcula su costo real y margen.
-                </p>
-            </header>
-
-            <div class="view-toolbar" id="products-toolbar">
-                <!--
-                    ui_products.js podrá añadir:
-                    - Botón "Nuevo producto".
-                    - Selector de categoría (hamburguesas, bebidas, etc.).
-                    - Búsqueda por nombre.
-                -->
-            </div>
-
-            <div class="view-content" id="products-content">
-                <!--
-                    ui_products.js:
-                    - Mostrará lista de productos (ej. Hamburguesa Clásica).
-                    - Cada producto:
-                        * lista de blocks asociados
-                        * modo básico vs profesional
-                        * tiempo de preparación
-                        * precio de venta
-
-                    calc_costs.js (backend y/o frontend):
-                    - Tomará blocks + cantidades para:
-                        * costo unitario real
-                        * precio mínimo sugerido
-                        * precio justo
-                        * margen en dinero y porcentaje.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.4 SALES VIEW                                        -->
-        <!--     - Flujo rápido de ventas diarias                  -->
-        <!-- ===================================================== -->
-        <section
-            id="sales-view"
-            class="app-view"
-            data-view="sales"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Ventas rápidas</h1>
-                <p class="view-subtitle">
-                    Registra ventas en pocos toques usando tus productos configurados.
-                </p>
-            </header>
-
-            <div class="view-toolbar" id="sales-toolbar">
-                <!--
-                    ui_sales.js podrá añadir:
-                    - Selector rápido de fecha/hora (por defecto ahora).
-                    - Filtros de método de pago.
-                    - Atajos de venta (ej. productos favoritos).
-                -->
-            </div>
-
-            <div class="view-content" id="sales-content">
-                <!--
-                    ui_sales.js:
-                    - Mostrará un panel tipo POS:
-                        * listado de productos
-                        * cantidades
-                        * carrito
-                        * total
-                    - Al confirmar, registrará:
-                        * venta con timestamp
-                        * productos vendidos
-                        * método de pago
-
-                    analytics_engine.py:
-                    - Con estos datos podrá calcular:
-                        * qué productos mueven más dinero
-                        * qué márgenes son mejores
-                        * patrones por hora / día.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.5 GOALS / CASHFLOW VIEW                             -->
-        <!--     - Metas financieras y flujo de caja               -->
-        <!-- ===================================================== -->
-        <section
-            id="goals-view"
-            class="app-view"
-            data-view="goals"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Metas y flujo de caja</h1>
-                <p class="view-subtitle">
-                    Define tus metas diarias, semanales y mensuales, y ve cuánto te falta.
-                </p>
-            </header>
-
-            <div class="view-toolbar" id="goals-toolbar">
-                <!--
-                    ui_goals.js:
-                    - Podrá añadir:
-                        * selector del periodo (día, semana, quincena, mes, año).
-                        * acceso rápido a configuración de metas.
-                -->
-            </div>
-
-            <div class="view-content" id="goals-content">
-                <!--
-                    calc_goals.py:
-                    - Recibirá:
-                        * metas por periodo
-                        * ventas reales
-                        * egresos reales
-                    - Devolverá:
-                        * cuánto llevas
-                        * cuánto falta
-                        * % completado
-                        * cuántos productos faltaría vender (por tipo).
-
-                    ui_goals.js:
-                    - Mostrará estos datos en forma de:
-                        * barras de progreso
-                        * tarjetas de resumen
-                        * tablas con metas vs realidad.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.6 ANALYTICS VIEW                                    -->
-        <!--     - Dashboard financiero inteligente                -->
-        <!-- ===================================================== -->
-        <section
-            id="analytics-view"
-            class="app-view"
-            data-view="analytics"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Analytics</h1>
-                <p class="view-subtitle">
-                    Visualiza tus productos más rentables, gastos más altos y evolución de tus metas.
-                </p>
-            </header>
-
-            <div class="view-toolbar" id="analytics-toolbar">
-                <!--
-                    ui_analytics.js:
-                    - Podrá añadir:
-                        * selector de rango de tiempo.
-                        * filtros (producto, categoría, método de pago).
-                -->
-            </div>
-
-            <div class="view-content" id="analytics-content">
-                <!--
-                    Aquí se montarán los gráficos:
-                    - charts_pie.js
-                    - charts_bar.js
-                    - charts_line.js
-                    - charts_velocity.js
-                    - charts_gauge.js
-
-                    analytics_engine.py:
-                    - Generará métricas clave (KPI):
-                        * rentabilidad por producto
-                        * top gastos
-                        * eficiencia del modelo de cocina
-                        * cumplimiento acumulado de metas.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.7 RECEIPTS VIEW                                     -->
-        <!--     - Recibos simples por venta                       -->
-        <!-- ===================================================== -->
-        <section
-            id="receipts-view"
-            class="app-view"
-            data-view="receipts"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Recibos</h1>
-                <p class="view-subtitle">
-                    Consulta, copia o exporta recibos de ventas para tus clientes.
-                </p>
-            </header>
-
-            <div class="view-toolbar" id="receipts-toolbar">
-                <!--
-                    ui_receipts.js:
-                    - Podrá añadir:
-                        * filtros por fecha.
-                        * búsqueda por número de recibo.
-                -->
-            </div>
-
-            <div class="view-content" id="receipts-content">
-                <!--
-                    ui_receipts.js:
-                    - Listará los recibos generados desde el módulo de ventas.
-                    - Permitirá:
-                        * copiar texto del recibo.
-                        * generar imagen (si implementas).
-                        * reenviar por WhatsApp/SMS/email.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.8 SETTINGS VIEW                                     -->
-        <!--     - Ajustes generales de la app                     -->
-        <!-- ===================================================== -->
-        <section
-            id="settings-view"
-            class="app-view"
-            data-view="settings"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Configuración</h1>
-                <p class="view-subtitle">
-                    Ajusta moneda, idioma, formato de números y tema visual.
-                </p>
-            </header>
-
-            <div class="view-content" id="settings-content">
-                <!--
-                    ui_settings.js:
-                    - Mostrará opciones para:
-                        * moneda principal
-                        * idioma de la interfaz
-                        * formato (separador de miles, decimales)
-                        * tema oscuro/claro
-
-                    settingsStore.js:
-                    - Guardará estas preferencias en almacenamiento local.
-                    - Sincronizará con el backend si decides hacerlo.
-                -->
-            </div>
-        </section>
-
-
-        <!-- ===================================================== -->
-        <!-- 3.9 ACTIVITY VIEW                                     -->
-        <!--     - Logs de actividad y tracking                     -->
-        <!-- ===================================================== -->
-        <section
-            id="activity-view"
-            class="app-view"
-            data-view="activity"
-        >
-            <header class="view-header">
-                <h1 class="view-title">Actividad</h1>
-                <p class="view-subtitle">
-                    Revisa acciones recientes: ventas, cambios de configuración y uso de módulos.
-                </p>
-            </header>
-
-            <div class="view-content" id="activity-content">
-                <!--
-                    ui_activity.js:
-                    - Mostrará un feed o tabla con:
-                        * "Se creó un nuevo block"
-                        * "Se registró una venta de X"
-                        * "Se actualizó una meta"
-                        * "Se cambió la configuración de moneda"
-
-                    activityApi.js / activity_repo.py:
-                    - Guardarán estos logs en backend y/o local.
-                    - Útil para auditoría y entender hábitos del usuario.
-                -->
-            </div>
-        </section>
-
-    </main>
-        <!-- ========================================================= -->
-    <!-- 4. CONTENEDOR GLOBAL DE MODALES (VENTANAS EMERGENTES)     -->
-    <!-- ========================================================= -->
-    <!--
-        [ROL GENERAL]
-        --------------------------------------------------------
-        - Este bloque es el ÚNICO lugar donde se mostrarán todos
-          los modales de la app (confirmaciones, formularios, detalles).
-        - NO se crean modales repartidos por toda la página.
-        - JavaScript (ui_*.js + helpers centralizados) se encargará
-          de:
-            * insertar contenido dentro de este contenedor,
-            * mostrar/ocultar el overlay,
-            * manejar cierre, ESC, clic fuera, etc.
-
-        [VENTAJAS DE ESTE ENFOQUE]
-        --------------------------------------------------------
-        - Control centralizado de:
-            * estilos de fondo (blur, oscuro, transparente),
-            * animaciones de apertura/cierre,
-            * comportamiento de scroll (bloquear fondo),
-            * accesibilidad (focus dentro del modal).
-        - Fácil de depurar, fácil de loggear, fácil de extender.
-
-        [CONEXIONES FUTURAS]
-        --------------------------------------------------------
-        - ui_* (por ejemplo ui_sales.js, ui_blocks.js):
-            * Llamarán a un helper global tipo:
-                showModal({ title, body, actions })
-                closeModal(id)
-            * Ese helper manipulará este contenedor.
-        - events.js:
-            * Manejará:
-                - clic en "x" de cerrar,
-                - teclas ESC,
-                - clic en overlay si quieres cierre al hacer click fuera.
-        - telemetry.js:
-            * Podrá registrar qué modales se abren más,
-              cuánto tarda la gente en responder, etc.
-    -->
-    <div
-        id="modal-container"
+    
+    <!-- [3.1] Contenedor de modales
+         - Portal donde se inyectan todos los modales de la app
+         - ui_layout.js expone: showModal(), hideModal(), destroyModal()
+         - z-index: 1000 (por encima de todo el contenido)
+         - aria-live="polite" para accesibilidad -->
+    <div 
+        id="modal-container" 
+        class="modal-container" 
         aria-live="polite"
-        aria-label="Contenedor de ventanas emergentes"
     >
-        <!--
-            [ESTADO INICIAL]
-            ----------------------------------------------------
-            - En estado base (sin ningún modal abierto), este
-              contenedor estará vacío y, por CSS, completamente
-              invisible (display: none, o visibility: hidden).
-            - Cuando un helper JS abra un modal:
-                * se insertará el HTML del modal dentro de
-                  #modal-root,
-                * se mostrará el overlay,
-                * se bloqueará el scroll del body si así lo decides.
-        -->
-
-        <!-- ================================================= -->
-        <!-- 4.1 OVERLAY GLOBAL DE MODALES                     -->
-        <!-- ================================================= -->
-        <div
-            id="modal-overlay"
-            class="modal-overlay"
-            hidden
-        >
-            <!--
-                [ROL DEL OVERLAY]
-                ------------------------------------------------
-                - Capa semi-transparente que oscurece el fondo.
-                - Hace que el usuario se concentre en el modal.
-                - Puede capturar clics para:
-                    * cerrar el modal al hacer click fuera,
-                      si así lo decides en tu UX.
-                - CSS típico:
-                    * posición fija,
-                    * ocupa toda la pantalla,
-                    * fondo rgba(0,0,0,0.4) o similar.
-
-                [CONEXIONES]
-                ------------------------------------------------
-                - events.js:
-                    * Suscribirá un listener de click a este
-                      overlay para cerrar el modal activo
-                      si esa política está activa.
-                - state.js:
-                    * Puede guardar si hay modal abierto,
-                      ej. appState.modal.isOpen = true/false.
-            -->
-        </div>
-
-        <!-- ================================================= -->
-        <!-- 4.2 RAÍZ DE MODALES (DÓNDE SE INSERTAN LAS VISTAS) -->
-        <!-- ================================================= -->
-        <div
-            id="modal-root"
-            class="modal-root"
-            aria-hidden="true"
-        >
-            <!--
-                [ROL DE modal-root]
-                ------------------------------------------------
-                - Es el nodo padre donde JavaScript inyectará
-                  uno o varios modales activos.
-                - Puede soportar:
-                    * un solo modal a la vez,
-                    * o pila de modales (diálogo encima de otro).
-                - Por defecto está vacío.
-                - CSS:
-                    * típico layout centrado:
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        posición fija (top/left 0, width/height 100%).
-
-                [COMPORTAMIENTO ESPERADO]
-                ------------------------------------------------
-                - Cuando no hay modales:
-                    * modal-root debe estar vacío,
-                    * y/o tomando un estado oculto.
-                - Cuando se abre un modal:
-                    * JS inserta un <article> o <div class="modal">
-                      con estructura estándar.
-            -->
-
-
-            <!-- ================================================= -->
-            <!-- 4.3 PLANTILLA DE MODAL ESTÁNDAR (EJEMPLO V0)      -->
-            <!-- ================================================= -->
-            <!--
-                IMPORTANTE:
-                - Esta estructura sirve como REFERENCIA de cómo
-                  debe verse un modal típico.
-                - Puede estar:
-                    * comentada (solo como guía),
-                    * o dejarse como ejemplo que JS reemplace.
-                - Tú decides si la dejas visible o la usas como
-                  comentario de referencia en desarrollo.
-
-                RECOMENDACIÓN:
-                - Déjala aquí por ahora como comentario y más
-                  adelante, cuando programes el helper de modales,
-                  la moveremos al JS o la clonaremos desde aquí.
-            -->
-            <!--
-            <article
-                class="modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="modal-title-example"
-                aria-describedby="modal-body-example"
-                data-modal-id="example"
-            >
-                <header class="modal-header">
-                    <h2 id="modal-title-example" class="modal-title">
-                        Título del modal
-                    </h2>
-                    <button
-                        type="button"
-                        class="modal-close-button"
-                        data-modal-action="close"
-                        aria-label="Cerrar"
-                    >
-                        ✕
-                    </button>
-                </header>
-
-                <section
-                    id="modal-body-example"
-                    class="modal-body"
-                >
-                    <p>
-                        Aquí va el contenido principal de la
-                        ventana emergente: texto, formularios,
-                        detalles de venta, etc.
-                    </p>
-                </section>
-
-                <footer class="modal-footer">
-                    <button
-                        type="button"
-                        class="modal-button secondary"
-                        data-modal-action="cancel"
-                    >
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="button"
-                        class="modal-button primary"
-                        data-modal-action="confirm"
-                    >
-                        Confirmar
-                    </button>
-                </footer>
-            </article>
-            -->
-            <!--
-                [NOTAS SOBRE ESTA PLANTILLA]
-                ------------------------------------------------
-                - role="dialog" y aria-modal="true":
-                    * Mejoran accesibilidad para lectores de pantalla.
-                - aria-labelledby / aria-describedby:
-                    * Indican qué elementos contienen el título
-                      y la descripción del modal.
-                - data-modal-id:
-                    * Te permite identificar este modal en JS
-                      para manejo en pila o tracking.
-                - data-modal-action:
-                    * Use this to wire generic listeners:
-                        - "close"
-                        - "cancel"
-                        - "confirm"
-                      sin tener que atar eventos a IDs específicos.
-            -->
-        </div>
-    </div>
-        <!-- ========================================================= -->
-    <!-- 5. CONTENEDOR GLOBAL DE TOASTS (NOTIFICACIONES RÁPIDAS)   -->
-    <!-- ========================================================= -->
-    <!--
-        [ROL GENERAL]
-        --------------------------------------------------------
-        - Este bloque es el ÚNICO lugar donde se van a renderizar
-          todas las notificaciones rápidas de la app (toasts).
-        - Un "toast" es un mensaje corto que:
-            * aparece unos segundos,
-            * no bloquea la interfaz,
-            * informa algo importante y desaparece solo.
-
-        EJEMPLOS DE TOASTS EN TU APP:
-        --------------------------------------------------------
-        - "Venta registrada correctamente."
-        - "Venta guardada localmente (offline)."
-        - "Error al conectar con el servidor. Reintentando..."
-        - "Sin conexión. Trabajando en modo offline."
-        - "Sincronización completada con éxito."
-        - "Metas actualizadas."
-
-        [RAZÓN DE TENER UN SOLO CONTENEDOR]
-        --------------------------------------------------------
-        - Evita tener <div> de notificaciones repartidas por todo
-          el DOM.
-        - Facilita:
-            * estilos globales,
-            * animaciones de entrada/salida,
-            * orden de las notificaciones,
-            * logging y depuración.
-        - Telemetry.js y activity logs pueden registrar fácilmente
-          qué mensajes se muestran y cuándo.
-    -->
-    <div
-        id="toast-container"
-        class="toast-container"
-        aria-live="assertive"
-        aria-atomic="false"
-    >
-        <!--
-            [ACCESIBILIDAD]
-            ----------------------------------------------------
-            - aria-live="assertive":
-                * Le indica a los lectores de pantalla que estos
-                  mensajes son importantes y deben ser anunciados.
-            - aria-atomic="false":
-                * Permite que se anuncien toasts conforme aparecen
-                  sin necesidad de considerar todo el contenedor
-                  como una unidad indivisible.
-
-            [ESTADO INICIAL]
-            ----------------------------------------------------
-            - Por defecto, el contenedor está vacío.
-            - CSS se encargará de:
-                * posicionarlo (por ejemplo, esquina inferior derecha),
-                * aplicar z-index para que aparezca encima de la UI.
-        -->
-
-        <!-- ================================================= -->
-        <!-- 5.1 PLANTILLA DE UN TOAST ESTÁNDAR (EJEMPLO V0)   -->
-        <!-- ================================================= -->
-        <!--
-            Esta sección es una PLANTILLA de referencia para
-            que sepas cómo debe lucir un toast típico.
-
-            - Lo recomendable:
-                * Tener esta estructura como comentario o ejemplo
-                  y que luego JavaScript genere toasts clonando
-                  esta forma (o construyendo el HTML equivalente).
-
-            - Cada toast se renderizará como un elemento hijo de
-              #toast-container, por ejemplo:
-                <div class="toast toast--success">...</div>
-
-            TIP (para más adelante en JS):
-            ----------------------------------------------------
-            - Crea un helper global tipo:
-                showToast(message, { type: "success" | "error" | "info" | "warning", durationMs })
-            - Ese helper:
-                * construye el <div> con las clases apropiadas,
-                * lo inserta en #toast-container,
-                * inicia un timer para eliminarlo después de X ms,
-                * opcionalmente permite cierre manual.
-
-            A continuación va un ejemplo comentado:
-        -->
-        <!--
-        <div
-            class="toast toast--success"
-            role="status"
-            data-toast-id="example-success"
-        >
-            <div class="toast-content">
-                <span class="toast-icon">✔</span>
-                <div class="toast-text">
-                    <p class="toast-title">Venta registrada</p>
-                    <p class="toast-message">
-                        La venta se guardó correctamente y será incluida en tus análisis.
-                    </p>
+        <!-- Los modales se crean dinámicamente aquí
+        
+        Ejemplos de modales comunes:
+        - Confirmación de eliminar venta
+        - Formulario de nuevo producto
+        - Detalle de transacción
+        - Selector de fecha/rango
+        - Editor de bloque
+        - Configuración de meta
+        - Visor de recibo
+        
+        Estructura típica de un modal:
+        <div class="modal-overlay" data-modal-id="confirm-delete">
+            <div class="modal-dialog" role="dialog" aria-modal="true">
+                <div class="modal-header">
+                    <h3 class="modal-title">¿Eliminar venta?</h3>
+                    <button class="modal-close" aria-label="Cerrar">×</button>
+                </div>
+                <div class="modal-body">
+                    <p>Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary">Cancelar</button>
+                    <button class="btn btn-danger">Eliminar</button>
                 </div>
             </div>
-
-            <button
-                type="button"
-                class="toast-close-button"
-                aria-label="Cerrar notificación"
-                data-toast-action="close"
-            >
-                ✕
-            </button>
         </div>
         -->
-
-        <!--
-            [DETALLE DE LA PLANTILLA]
-            ----------------------------------------------------
-            - class="toast":
-                * Clase base para todos los toasts (estilos comunes).
-
-            - class="toast--success" / "toast--error" / "toast--info" / "toast--warning":
-                * Modificadores visuales según el tipo de mensaje:
-                    success (verde), error (rojo), info (azul), warning (amarillo)
-                * Esto lo manejarás desde CSS.
-
-            - role="status":
-                * Indica que se trata de un mensaje de estado
-                  importante para el usuario.
-
-            - data-toast-id:
-                * Permite referenciar este toast concreto en JS
-                  si quieres hacer cosas como:
-                    - eliminarlo antes del timeout,
-                    - sincronizar logs,
-                    - marcarlo como "ya leído".
-
-            - .toast-content:
-                * Contiene icono + texto del toast.
-            - .toast-icon:
-                * Puedes poner emojis, SVG o iconos de fuente aquí.
-            - .toast-text:
-                * Agrupa título + mensaje.
-            - .toast-title:
-                * Mensaje corto tipo "Venta registrada".
-            - .toast-message:
-                * Detalle adicional opcional.
-
-            - .toast-close-button:
-                * Botón para cerrar el toast manualmente antes de que
-                  se consuma el tiempo de vida automático.
-                * data-toast-action="close":
-                    - Puedes enganchar un listener genérico en JS:
-                        if (event.target.dataset.toastAction === "close") { ... }
-        -->
-
-        <!--
-            [COMPORTAMIENTO ESPERADO FUTURO]
-            ----------------------------------------------------
-            - Cuando se muestre una notificación:
-                * JS creará un nuevo <div class="toast ..."> dentro
-                  de #toast-container.
-                * Se aplicará una animación de entrada (fade/slide).
-                * Después de X segundos:
-                    * se dispara animación de salida,
-                    * y se elimina el nodo del DOM.
-
-            - Cuando haya múltiples toasts:
-                * se apilarán verticalmente (arriba/abajo según diseño)
-                  usando flex-direction: column en .toast-container.
-
-            - Telemetría:
-                * Cada vez que se muestra un toast, telemetry.js
-                  puede registrar evento:
-                    - tipo de toast (success/error/info/warning),
-                    - origen (módulo: sales, goals, blocks, etc.),
-                    - timestamp.
-
-            - Offline / Sync:
-                * syncEngine.js puede disparar toasts según estado de
-                  sincronización:
-                    - "Sin conexión. Operando en modo offline."
-                    - "Sincronización completada."
-                    - "Error al sincronizar. Reintentando en 30s."
-        -->
-    </div>
-        <!-- ========================================================= -->
-    <!-- 6. OVERLAYS Y ESTADOS ESPECIALES                         -->
-    <!-- ========================================================= -->
-    <!--
-        Aquí definimos capas visuales especiales que se muestran
-        POR ENCIMA de toda la interfaz normal cuando ocurre algo
-        importante a nivel de estado global de la app:
-
-        - loading-overlay  → Pantalla de "cargando" o procesos críticos.
-        - offline-banner   → Aviso discreto pero visible de modo offline.
-        - splash-screen    → Pantalla inicial tipo "portada" de la app.
-
-        Estas capas NO se usan todo el tiempo:
-        - se activan y desactivan desde JavaScript,
-        - usando atributos como "hidden" y clases CSS específicas,
-        - nunca reemplazan el contenido, solo lo cubren/acompañan.
-    -->
-
-
-    <!-- ========================================================= -->
-    <!-- 6.1 OVERLAY DE CARGA GLOBAL (LOADING OVERLAY)            -->
-    <!-- ========================================================= -->
-    <div
-        id="loading-overlay"
-        class="overlay overlay-loading"
-        hidden
-    >
-        <!--
-            [ROL DEL LOADING OVERLAY]
-            ----------------------------------------------------
-            - Mostrar una pantalla semi-transparente sobre toda
-              la app cuando ocurre:
-                * Carga inicial crítica (primer arranque).
-                * Sincronización pesada de datos.
-                * Procesos intensivos que no quieres que se interrumpan.
-            - Evita que el usuario haga clics mientras algo
-              importante se está ejecutando.
-
-            [COMPORTAMIENTO ESPERADO]
-            ----------------------------------------------------
-            - Por defecto, tiene el atributo "hidden" → NO se ve.
-            - JavaScript puede:
-                * quitar el atributo "hidden" para mostrarlo,
-                * volver a colocarlo cuando el proceso termine.
-
-            EJEMPLOS DE USO:
-            ----------------------------------------------------
-            - Durante el primer sync de blocks/products/sales
-              desde el backend al instalar la app.
-            - Durante un "full resync" manual.
-            - Cuando se está calculando un análisis pesado.
-        -->
-
-        <!-- Contenedor interno centrado para el contenido del overlay -->
-        <div class="overlay-content">
-            <!-- Podrás reemplazar este texto por un spinner SVG, logo, etc. -->
-            <div class="overlay-spinner">
-                <!--
-                    Aquí puedes personalizar más adelante:
-                    - un icono animado,
-                    - el logo de tu app,
-                    - o un componente visual más complejo.
-                -->
-                <span class="overlay-spinner-icon">⏳</span>
-            </div>
-
-            <div class="overlay-text">
-                <p class="overlay-title">Cargando datos del negocio...</p>
-                <p class="overlay-subtitle">
-                    Por favor espera unos segundos mientras sincronizamos tu información.
-                </p>
-            </div>
-        </div>
     </div>
 
 
     <!-- ========================================================= -->
-    <!-- 6.2 BANNER DE ESTADO OFFLINE                             -->
+    <!-- CAPA 4: TOASTS (NOTIFICACIONES TEMPORALES)                -->
+    <!--         - Feedback visual no invasivo al usuario          -->
     <!-- ========================================================= -->
-    <div
-        id="offline-banner"
-        class="banner banner-offline"
+    
+    <!-- [4.1] Contenedor de toasts
+         - Posicionado en esquina (top-right por defecto)
+         - Auto-dismiss en 3-5 segundos
+         - Apilamiento vertical
+         - Controlado por: telemetry.js o módulo de notificaciones
+         - Tipos: success, error, warning, info -->
+    <div 
+        id="toast-container" 
+        class="toast-container" 
+        aria-live="assertive"
+        aria-atomic="true"
+        role="status"
+    >
+        <!-- Los toasts se generan dinámicamente aquí
+        
+        Ejemplos de toasts:
+        - "Venta registrada correctamente" (success)
+        - "Error al sincronizar datos" (error)
+        - "Stock bajo en producto X" (warning)
+        - "Meta alcanzada: $1000" (info)
+        
+        Estructura típica:
+        <div class="toast toast-success" data-toast-id="12345">
+            <svg class="toast-icon" width="20" height="20">
+                <use href="#icon-check-circle"></use>
+            </svg>
+            <div class="toast-content">
+                <strong class="toast-title">¡Éxito!</strong>
+                <p class="toast-message">Venta registrada correctamente</p>
+            </div>
+            <button class="toast-close" aria-label="Cerrar">×</button>
+        </div>
+        -->
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- CAPA 5: OVERLAYS / ESTADOS ESPECIALES                     -->
+    <!--         - Pantallas de carga, banners offline, etc.       -->
+    <!-- ========================================================= -->
+    
+    <!-- [5.1] Banner de estado offline
+         - Aparece sticky en top cuando navigator.onLine === false
+         - syncEngine.js lo muestra/oculta automáticamente
+         - Oculto por defecto (hidden attribute) -->
+    <div 
+        id="offline-banner" 
+        class="banner banner-offline" 
+        role="alert"
+        aria-live="polite"
         hidden
     >
-        <!--
-            [ROL DEL OFFLINE BANNER]
-            ----------------------------------------------------
-            - Avisar al usuario que la app está trabajando SIN
-              conexión a internet.
-            - No bloquea el uso de la app (a diferencia del overlay).
-            - Es ideal para:
-                * recordar al usuario que está en modo offline,
-                * evitar confusión cuando los cambios no se ven en el backend.
-
-            [COMPORTAMIENTO ESPERADO]
-            ----------------------------------------------------
-            - Se muestra como una franja (arriba o abajo, según CSS)
-              con un mensaje corto.
-            - syncEngine.js detectará:
-                * window.navigator.onLine
-                * eventos 'online' / 'offline'
-              y decidirá cuándo mostrar/ocultar este banner.
-        -->
-
         <div class="banner-content">
-            <span class="banner-icon">⚠️</span>
-            <div class="banner-text">
-                <p class="banner-title">Modo offline activado</p>
-                <p class="banner-subtitle">
-                    Tus acciones se guardarán localmente y se sincronizarán cuando vuelva la conexión.
-                </p>
-            </div>
+            <svg class="banner-icon" width="20" height="20">
+                <use href="#icon-wifi-off"></use>
+            </svg>
+            <span class="banner-text">
+                Modo offline - Los cambios se sincronizarán automáticamente
+            </span>
         </div>
-
-        <!-- Botón opcional para que el usuario intente reintentar sync manual -->
-        <button
-            id="offline-retry-sync-button"
-            class="banner-action-button"
-            type="button"
+        <button 
+            type="button" 
+            class="banner-close" 
+            aria-label="Cerrar banner"
+            data-event="dismiss-offline-banner"
         >
-            Reintentar sincronización
+            <svg width="16" height="16">
+                <use href="#icon-x"></use>
+            </svg>
         </button>
     </div>
-
-
-    <!-- ========================================================= -->
-    <!-- 6.3 SPLASH SCREEN / PANTALLA DE BIENVENIDA                -->
-    <!-- ========================================================= -->
-    <div
-        id="splash-screen"
-        class="overlay overlay-splash"
+    
+    <!-- [5.2] Banner de sincronización en progreso
+         - Aparece cuando syncEngine.js está sincronizando
+         - Muestra contador de elementos pendientes
+         - Se oculta automáticamente al completar -->
+    <div 
+        id="sync-banner" 
+        class="banner banner-sync" 
+        role="status"
+        aria-live="polite"
         hidden
     >
-        <!--
-            [ROL DEL SPLASH SCREEN]
-            ----------------------------------------------------
-            - Mostrar una pantalla de bienvenida al abrir la app.
-            - Útil para:
-                * branding,
-                * transición mientras se carga el estado inicial,
-                * mostrar el nombre del negocio al arrancar,
-                * hacer que la app se sienta más "nativa".
-
-            [COMPORTAMIENTO ESPERADO]
-            ----------------------------------------------------
-            - Puede mostrarse al inicio:
-                * mientras se lee el estado local,
-                * mientras se valida sesión,
-                * mientras se cargan configuraciones rápidas.
-            - Una vez listo todo:
-                * JavaScript oculta este splash y muestra el main.
-        -->
-
-        <div class="splash-content">
-            <!-- Logo o nombre de la app -->
-            <div class="splash-logo">
-                <!-- Aquí puedes luego cambiar a un logotipo visual -->
-                <span class="splash-logo-text">Finance PWA</span>
-            </div>
-
-            <!-- Nombre del negocio (cuando esté disponible) -->
-            <div class="splash-business">
-                <!--
-                    Más adelante, ui_layout.js o index.js
-                    pueden actualizar este texto con:
-                        appState.business.name
-                    para mostrar algo como:
-                        "BurgerLand"
-                        "Tacos Don Pepe"
-                -->
-                <span id="splash-business-name">Tu negocio de comida</span>
-            </div>
-
-            <!-- Mensaje breve / slogan -->
-            <div class="splash-tagline">
-                <p>Analiza tus costos, ventas y metas… sin dejar de cocinar.</p>
+        <div class="banner-content">
+            <svg class="banner-icon spinner" width="20" height="20">
+                <use href="#icon-loader"></use>
+            </svg>
+            <span class="banner-text">
+                Sincronizando 
+                <strong id="sync-count">0</strong> 
+                cambios pendientes...
+            </span>
+        </div>
+    </div>
+    
+    <!-- [5.3] Loader inicial (Splash Screen)
+         - Cubre toda la pantalla durante bootstrap
+         - main.js lo oculta después de:
+             * Registrar Service Worker
+             * Inicializar IndexedDB
+             * Cargar configuración
+             * Renderizar primera vista
+         - Transición fade out (0.3s) -->
+    <div 
+        id="app-loader" 
+        class="loader-overlay"
+        aria-busy="true"
+        aria-label="Cargando Finance PWA"
+    >
+        <div class="loader-content">
+            <!-- Logo de la app -->
+            <img 
+                src="/static/icons/icon-192.png" 
+                alt="Finance PWA" 
+                class="loader-logo"
+                width="80" 
+                height="80"
+            >
+            
+            <!-- Spinner animado -->
+            <div class="spinner" role="progressbar"></div>
+            
+            <!-- Texto de estado (actualizado por main.js) -->
+            <p id="loader-text" class="loader-text">
+                Iniciando Finance PWA...
+            </p>
+            
+            <!-- Barra de progreso (opcional) -->
+            <div class="progress-bar">
+                <div 
+                    id="loader-progress" 
+                    class="progress-fill"
+                    style="width: 0%"
+                    role="progressbar"
+                    aria-valuenow="0"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                ></div>
             </div>
         </div>
     </div>
+    
+    <!-- [5.4] Overlay de consentimiento/onboarding (primera visita)
+         - Aparece en primera carga si no hay datos de onboarding
+         - Bloqueante (no se puede cerrar sin completar)
+         - Controlado por: ui_onboarding.js -->
+    <div 
+        id="onboarding-overlay" 
+        class="overlay overlay-onboarding"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        hidden
+    >
+        <!-- Contenido renderizado por ui_onboarding.js -->
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- SPRITES SVG (ICONOS REUTILIZABLES)                        -->
+    <!--    - Definidos aquí para evitar requests HTTP             -->
+    <!--    - Referenciados con: <use href="#icon-nombre">         -->
+    <!-- ========================================================= -->
+    
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        style="display: none;"
+        aria-hidden="true"
+    >
+        <defs>
+            <!-- Navegación -->
+            <symbol id="icon-menu" viewBox="0 0 24 24">
+                <path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-home" viewBox="0 0 24 24">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="2" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-x" viewBox="0 0 24 24">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <!-- Búsqueda -->
+            <symbol id="icon-search" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <!-- Estados -->
+            <symbol id="icon-check" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-check-circle" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-alert-circle" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-loader" viewBox="0 0 24 24">
+                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <!-- Conectividad -->
+            <symbol id="icon-wifi-off" viewBox="0 0 24 24">
+                <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-refresh" viewBox="0 0 24 24">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" stroke="currentColor" stroke-width="2" fill="none"/>
+            </symbol>
+            
+            <!-- Usuario -->
+            <symbol id="icon-user" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="5" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-bell" viewBox="0 0 24 24">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </symbol>
+            
+            <!-- Finanzas -->
+            <symbol id="icon-dollar" viewBox="0 0 24 24">
+                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-target" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </symbol>
+            
+            <!-- Contenido -->
+            <symbol id="icon-package" viewBox="0 0 24 24">
+                <path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke="currentColor" stroke-width="2"/>
+            </symbol>
+            
+            <symbol id="icon-layers" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-bar-chart" viewBox="0 0 24 24">
+                <path d="M12 20V10M18 20V4M6 20v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-file-text" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="icon-activity" viewBox="0 0 24 24">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </symbol>
+            
+            <symbol id="icon-settings" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M12 1v6m0 6v10M1 12h6m6 0h10" stroke="currentColor" stroke-width="2"/>
+            </symbol>
+        </defs>
+    </svg>
+
+</body>
