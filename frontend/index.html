@@ -1,0 +1,218 @@
+<head>
+    <!-- ========================================================= -->
+    <!-- 1. CONFIGURACIÓN BÁSICA DEL DOCUMENTO                     -->
+    <!--    - Codificación, viewport y título                      -->
+    <!-- ========================================================= -->
+
+    <!-- [1.1] Configuración de codificación en UTF-8
+         - Asegura que tildes, ñ y símbolos de moneda se vean bien. -->
+    <meta charset="UTF-8">
+
+    <!-- [1.2] Viewport para PWA responsive en móviles, tablets y desktop
+         - width=device-width: ajusta el ancho al del dispositivo.
+         - initial-scale=1.0: zoom inicial.
+         - maximum-scale=1.0: evita zoom accidental en POS.
+         - viewport-fit=cover: usa toda el área útil (notch, etc.). -->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
+    >
+
+    <!-- [1.3] Título de la app
+         - Aparece en la pestaña del navegador y en algunos contextos PWA. -->
+    <title>Finance PWA · Asistente Financiero para Negocios de Comida</title>
+
+
+    <!-- ========================================================= -->
+    <!-- 2. SEO BÁSICO (PORQUE TU APP ES PÚBLICA)                  -->
+    <!--    - Descripción, keywords y autor                        -->
+    <!-- ========================================================= -->
+
+    <!-- [2.1] Descripción corta de la app
+         - Útil para buscadores y cuando se previsualiza en algunos sitios. -->
+    <meta
+        name="description"
+        content="Finance PWA es un asistente financiero avanzado para negocios de comida. Calcula costos reales, ganancias, metas y flujo de caja por producto, venta y periodo de tiempo."
+    >
+
+    <!-- [2.2] Palabras clave
+         - No es crítico hoy en día, pero ayuda a contextualizar el proyecto. -->
+    <meta
+        name="keywords"
+        content="PWA, finanzas, negocios de comida, restaurante, costos, ganancias, metas, flujo de caja, POS"
+    >
+
+    <!-- [2.3] Autor / marca del proyecto -->
+    <meta name="author" content="Finance PWA">
+
+
+    <!-- ========================================================= -->
+    <!-- 3. PWA: MANIFEST + CAPACIDAD DE APP                       -->
+    <!--    - Hace que el navegador trate tu web como aplicación   -->
+    <!-- ========================================================= -->
+
+    <!-- [3.1] Enlace al manifest de la PWA
+         - IMPORTANTE: en tu estructura, manifest.json está en /static/manifest.json
+         - Flask debe servir correctamente /static/ para que esto funcione. -->
+    <link rel="manifest" href="/static/manifest.json">
+
+    <!-- [3.2] mobile-web-app-capable
+         - Le indica a navegadores (especialmente Android/Chrome) que puede
+           comportarse como una app cuando se “añade a pantalla de inicio”. -->
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- [3.3] Color principal de la app
+         - Barra del navegador en móviles y algunos contextos de sistema. -->
+    <meta name="theme-color" content="#111111">
+
+
+    <!-- ========================================================= -->
+    <!-- 4. ICONOS / FAVICONS (BASADO EN TU /static/icons)          -->
+    <!--    - Iconos para navegador, PWA y Apple                    -->
+    <!-- ========================================================= -->
+
+    <!-- [4.1] Favicon / icono base (navegadores modernos) -->
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="192x192"
+        href="/static/icons/icon-192.png"
+    >
+
+    <!-- [4.2] Icono grande para PWA (Android / desktop) -->
+    <link
+        rel="icon"
+        type="image/png"
+        sizes="512x512"
+        href="/static/icons/icon-512.png"
+    >
+
+    <!-- [4.3] Icono para iOS/iPadOS al añadir a pantalla de inicio -->
+    <link
+        rel="apple-touch-icon"
+        href="/static/icons/icon-192.png"
+    >
+
+    <!-- [4.4] Permite modo "web app" en iOS (sin barra de navegador) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- [4.5] Título que verá el usuario cuando la app esté instalada en iOS -->
+    <meta name="apple-mobile-web-app-title" content="Finance PWA">
+
+    <!-- [4.6] Estilo de barra de estado en iOS (negro translúcido queda bien con tema oscuro) -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+
+    <!-- ========================================================= -->
+    <!-- 5. METADATOS SOCIALES (OPEN GRAPH + TWITTER)               -->
+    <!--    - Para previews bonitas en WhatsApp / X / Facebook      -->
+    <!--    - Ajusta dominio e imagen cuando tengas brand final     -->
+    <!-- ========================================================= -->
+
+    <!-- [5.1] Open Graph básico -->
+    <meta property="og:type" content="website">
+    <meta
+        property="og:title"
+        content="Finance PWA · Asistente Financiero para Negocios de Comida"
+    >
+    <meta
+        property="og:description"
+        content="Analiza tu negocio de comida con precisión: costos reales, ventas, metas y flujo de caja en una PWA offline-first."
+    >
+    <!-- [5.2] URL pública principal de tu app (ajusta a tu dominio real) -->
+    <meta property="og:url" content="https://finance.ejemplo.com/">
+
+    <!-- [5.3] Imagen de previsualización
+         - Por ahora usamos splash.png como cover; luego puedes cambiarla. -->
+    <meta
+        property="og:image"
+        content="https://finance.ejemplo.com/static/icons/splash.png"
+    >
+
+    <!-- [5.4] Twitter Card (X) básica -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta
+        name="twitter:title"
+        content="Finance PWA · Asistente Financiero para Negocios de Comida"
+    >
+    <meta
+        name="twitter:description"
+        content="PWA inteligente para dueños de negocios de comida. Calcula costos, ganancias y metas de forma visual y detallada."
+    >
+    <meta
+        name="twitter:image"
+        content="https://finance.ejemplo.com/static/icons/splash.png"
+    >
+
+
+    <!-- ========================================================= -->
+    <!-- 6. MEJORAS PARA EXPERIENCIA EN MÓVIL                      -->
+    <!-- ========================================================= -->
+
+    <!-- [6.1] Evita que el navegador convierta números en links de teléfono -->
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- [6.2] (Opcional) Indicar idioma principal de contenido al navegador
+         - El atributo lang real va en <html>, esto es solo informativo extra. -->
+    <meta http-equiv="Content-Language" content="es">
+
+
+    <!-- ========================================================= -->
+    <!-- 7. HOJAS DE ESTILO (CSS) SEGÚN TU ESTRUCTURA              -->
+    <!--    - index.html vive en /frontend                          -->
+    <!--    - Por eso las rutas son relativas: css/...              -->
+    <!-- ========================================================= -->
+
+    <!-- [7.1] Estilos base: reset, tipografías, utilidades globales -->
+    <link rel="stylesheet" href="css/base.css">
+
+    <!-- [7.2] Layout tipo POS: header, sidebar, main, grids -->
+    <link rel="stylesheet" href="css/layout.css">
+
+    <!-- [7.3] Estilos para formularios (onboarding, blocks, products, sales, etc.) -->
+    <link rel="stylesheet" href="css/forms.css">
+
+    <!-- [7.4] Estilos específicos para contenedores de gráficos, tarjetas de analytics -->
+    <link rel="stylesheet" href="css/charts.css">
+
+    <!-- [7.5] Tema oscuro por defecto (luego puedes alternar tema con JS) -->
+    <link rel="stylesheet" href="css/theme-dark.css">
+
+
+    <!-- ========================================================= -->
+    <!-- 8. PISTAS DE PERFORMANCE (OPCIONALES, PREPARADAS)          -->
+    <!--    - Puedes descomentar cuando las necesites               -->
+    <!-- ========================================================= -->
+
+    <!-- [8.1] (Opcional futuro) Preconexión a servidor de API propio
+         - Útil si más adelante expones un subdominio tipo api.finance.ejemplo.com
+         - De momento lo dejo comentado para que no moleste.
+
+    <link rel="preconnect" href="https://api.finance.ejemplo.com" crossorigin>
+    -->
+
+    <!-- [8.2] (Opcional futuro) Preconexión a Google Fonts u otro CDN
+         - Solo si realmente usas fuentes externas.
+         
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    -->
+
+
+    <!-- ========================================================= -->
+    <!-- 9. SCRIPT PRINCIPAL DEL FRONTEND (ENTRYPOINT JS)           -->
+    <!--    - SOLO cargamos main.js aquí                            -->
+    <!--    - main.js importará el resto de módulos JS              -->
+    <!-- ========================================================= -->
+
+    <!-- [9.1] Script de entrada de la PWA
+         - type="module" permite usar imports ES6.
+         - Ruta relativa: index.html está en /frontend → js/main.js en /frontend/js/main.js
+         - main.js será responsable de:
+             * registrar el Service Worker (static/sw.js),
+             * inicializar Socket.IO (cuando lo conectes),
+             * llamar a initApp() de index.js,
+             * inicializar router, state, syncEngine, etc. -->
+    <script type="module" src="js/main.js"></script>
+
+</head>
